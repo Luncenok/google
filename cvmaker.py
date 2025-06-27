@@ -12,6 +12,7 @@ from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from template_config import TEMPLATES
 
 # --- Configuration ---
 
@@ -143,9 +144,10 @@ CV_DATA = {
 
 class SkillsFlowable(Flowable):
     """A custom flowable to draw categorized or simple skills."""
-    def __init__(self, skills_data):
+    def __init__(self, skills_data, colors):
         Flowable.__init__(self)
         self.skills = skills_data
+        self.colors = colors
         self.width = 0
         self.height = 0
 
@@ -192,16 +194,16 @@ class SkillsFlowable(Flowable):
                 if x_cursor + item_width > self.width:
                     x_cursor = 0
                     y_cursor -= line_height
-                c.setFillColor(SKILL_BG_COLOR)
+                c.setFillColor(self.colors['skill_bg'])
                 c.roundRect(x_cursor, y_cursor, item_width, line_height * 0.8, radius, stroke=0, fill=1)
-                c.setFillColor(TEXT_COLOR)
+                c.setFillColor(self.colors['text'])
                 c.drawString(x_cursor + x_padding, y_cursor + y_padding, skill)
                 x_cursor += item_width + h_spacing
 
         if isinstance(self.skills, dict):
             for category, skills in self.skills.items():
                 c.setFont(FONT_NAME_BOLD, 10)
-                c.setFillColor(TEXT_COLOR)
+                c.setFillColor(self.colors['text'])
                 c.drawString(0, y_cursor + y_padding, category)
                 y_cursor -= line_height
                 draw_skill_tags(skills)
@@ -304,31 +306,37 @@ def draw_header(c, doc):
 
     c.restoreState()
 
-def draw_section_title(story, title):
+def draw_section_title(story, title, colors):
     """Adds a formatted section title to the story."""
     style = ParagraphStyle(
         name='SectionTitle', fontName=FONT_NAME_BOLD, fontSize=12,
-        textColor=PRIMARY_COLOR, spaceBefore=0.4*cm, spaceAfter=0.2*cm,
-        borderBottomWidth=1.5, borderBottomColor=PRIMARY_COLOR, borderBottomPadding=2,
+        textColor=colors['primary'], spaceBefore=0.4*cm, spaceAfter=0.2*cm,
+        borderBottomWidth=1.5, borderBottomColor=colors['primary'], borderBottomPadding=2,
     )
     story.append(Paragraph(title.upper(), style))
 
-def create_cv_story(data):
+def create_cv_story(data, template_name="classic"):
     """Creates the main 'story' list of flowables for the document."""
     story = []
     
+    template = TEMPLATES.get(template_name, TEMPLATES["classic"])
+    colors = template["colors"]
+    layout = template["layout"]
+
     # Add header content directly to the story
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.platypus import Image, Table, TableStyle
-    from reportlab.lib import colors
+    from reportlab.lib import colors as r_colors
     
     # Create a table for the header with two columns
-    img_path = download_placeholder_image()
-    img = Image(img_path, width=2.5*cm, height=2.5*cm) if img_path else None
+    img = None
+    if layout.get("show_image"):
+        img_path = download_placeholder_image()
+        img = Image(img_path, width=2.5*cm, height=2.5*cm) if img_path else None
     
     # Create name and title section
-    name_style = ParagraphStyle('NameStyle', fontName=FONT_NAME_BOLD, fontSize=24, textColor=PRIMARY_COLOR, leading=28)
-    title_style = ParagraphStyle('TitleStyle', fontName=FONT_NAME, fontSize=14, textColor=SECONDARY_COLOR, leading=18)
+    name_style = ParagraphStyle('NameStyle', fontName=FONT_NAME_BOLD, fontSize=24, textColor=colors['primary'], leading=28)
+    title_style = ParagraphStyle('TitleStyle', fontName=FONT_NAME, fontSize=14, textColor=colors['secondary'], leading=18)
     
     name_title = [
         [Paragraph(data.get("name", ""), name_style)],
@@ -340,22 +348,23 @@ def create_cv_story(data):
     for key, value in data.get("contact", {}).items():
         contact_items.append(f"<b>{key}:</b> {value}")
     contact_info = "  •  ".join(contact_items)
-    contact_style = ParagraphStyle('contact', fontName=FONT_NAME, fontSize=8, textColor=SECONDARY_COLOR, leading=10)
+    contact_style = ParagraphStyle('contact', fontName=FONT_NAME, fontSize=8, textColor=colors['secondary'], leading=10)
     
     name_title.append([Paragraph(contact_info, contact_style)])
     
+    header_data = [
+        Table(name_title, colWidths=['*'], style=[
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ])
+    ]
+    if img:
+        header_data.append(img)
+
     # Create header table with no padding
-    header_table = Table([
-        [
-            Table(name_title, colWidths=['*'], style=[
-                ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-                ('TOPPADDING', (0, 0), (-1, -1), 0),
-            ]),
-            img
-        ]
-    ], colWidths=['*', 3*cm])
+    header_table = Table([header_data], colWidths=['*', 3*cm] if img else ['*'])
     
     header_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -374,22 +383,22 @@ def create_cv_story(data):
     story.append(Spacer(1, 0.1 * cm))
     
     # --- STYLES ---
-    body_style = ParagraphStyle('Body', fontName=FONT_NAME, fontSize=10, textColor=TEXT_COLOR, leading=14, spaceAfter=6)
-    job_title_style = ParagraphStyle('JobTitle', fontName=FONT_NAME_BOLD, fontSize=11, textColor=TEXT_COLOR, spaceAfter=0)
-    company_style = ParagraphStyle('Company', fontName=FONT_NAME, fontSize=10, textColor=SECONDARY_COLOR, spaceAfter=2)
-    date_style = ParagraphStyle('Date', fontName=FONT_NAME_ITALIC, fontSize=9, textColor=SECONDARY_COLOR, spaceAfter=4)
+    body_style = ParagraphStyle('Body', fontName=FONT_NAME, fontSize=10, textColor=colors['text'], leading=14, spaceAfter=6)
+    job_title_style = ParagraphStyle('JobTitle', fontName=FONT_NAME_BOLD, fontSize=11, textColor=colors['text'], spaceAfter=0)
+    company_style = ParagraphStyle('Company', fontName=FONT_NAME, fontSize=10, textColor=colors['secondary'], spaceAfter=2)
+    date_style = ParagraphStyle('Date', fontName=FONT_NAME_ITALIC, fontSize=9, textColor=colors['secondary'], spaceAfter=4)
     bullet_style = ParagraphStyle('Bullet', parent=body_style, leftIndent=0.5*cm, firstLineIndent=-0.2*cm, spaceAfter=2)
-    lang_style = ParagraphStyle('Lang', fontName=FONT_NAME, fontSize=10, textColor=TEXT_COLOR, spaceAfter=2)
+    lang_style = ParagraphStyle('Lang', fontName=FONT_NAME, fontSize=10, textColor=colors['text'], spaceAfter=2)
 
     # --- SUMMARY ---
     if "summary" in data and data["summary"]:
-        draw_section_title(story, "Summary")
+        draw_section_title(story, "Summary", colors)
         story.append(Paragraph(textwrap.dedent(data["summary"]), body_style))
         story.append(Spacer(1, 0.2 * cm))
 
     # --- PUBLICATIONS ---
     if "publications" in data and data["publications"]:
-        draw_section_title(story, "Publications & Research")
+        draw_section_title(story, "Publications & Research", colors)
         for pub in data["publications"]:
             story.append(Paragraph(f"<b>{pub.get('title', '')}</b>", body_style))
             story.append(Paragraph(f"<i>{pub.get('journal', '')}</i>", body_style))
@@ -398,7 +407,7 @@ def create_cv_story(data):
 
     # --- EXPERIENCE ---
     if "experience" in data and data["experience"]:
-        draw_section_title(story, "Experience")
+        draw_section_title(story, "Experience", colors)
         for job in data["experience"]:
             story.append(Paragraph(job.get("title", ""), job_title_style))
             story.append(Paragraph(job.get("company", ""), company_style))
@@ -409,7 +418,7 @@ def create_cv_story(data):
 
     # --- PROJECTS ---
     if "projects" in data and data["projects"]:
-        draw_section_title(story, "Projects")
+        draw_section_title(story, "Projects", colors)
         for proj in data["projects"]:
             story.append(Paragraph(proj.get("name", ""), job_title_style))
             story.append(Paragraph(proj.get("date", ""), date_style))
@@ -419,13 +428,13 @@ def create_cv_story(data):
 
     # --- SKILLS ---
     if "skills" in data and data["skills"]:
-        draw_section_title(story, "Technical Skills")
-        story.append(SkillsFlowable(data["skills"]))
-        story.append(Spacer(1, 4 * cm))
+        draw_section_title(story, "Technical Skills", colors)
+        story.append(SkillsFlowable(data["skills"], colors))
+        story.append(Spacer(1, 5 * cm))
 
     # --- EDUCATION, AWARDS, LANGUAGES ---
     if "education" in data and data["education"]:
-        draw_section_title(story, "Education & Qualifications")
+        draw_section_title(story, "Education & Qualifications", colors)
         for edu in data["education"]:
             story.append(Paragraph(f"<b>{edu.get('degree', '')}</b>, <i>{edu.get('institution', '')}</i> - {edu.get('date', '')}", body_style))
 
@@ -443,7 +452,7 @@ def create_cv_story(data):
     
     return story
 
-def build_pdf(filename, cv_data):
+def build_pdf(filename, cv_data, template_name="classic"):
     """Builds the final PDF document."""
     doc = BaseDocTemplate(
         filename, 
@@ -471,7 +480,7 @@ def build_pdf(filename, cv_data):
     doc.addPageTemplates([template])
 
     # Create the story (which now includes the header)
-    story = create_cv_story(cv_data)
+    story = create_cv_story(cv_data, template_name)
     
     print(f"Generating optimized CV: {filename}...")
     doc.build(story)

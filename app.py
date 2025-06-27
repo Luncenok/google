@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from gemini_utils import initialize_gemini, generate_cv_data, rate_cv, apply_suggestions
 import os
 import json
+from template_config import TEMPLATES
 
 # Load environment variables from .env file
 load_dotenv()
@@ -158,6 +159,10 @@ def display_editable_cv(cv_data):
 
 # --- Sidebar ---
 with st.sidebar:
+    st.header("CV Customization")
+    template_options = list(TEMPLATES.keys())
+    selected_template = st.selectbox("Choose a CV Template", template_options)
+
     st.header("User Profiles")
     profiles = load_profiles()
     profile_names = ["Create New Profile"] + list(profiles.keys())
@@ -238,7 +243,7 @@ with col2: # AI Analysis Column
                 if st.button("Generate PDF", use_container_width=True):
                     with st.spinner("Generating PDF..."):
                         pdf_file_name = f"{st.session_state.cv_data['name'].replace(' ', '_')}_CV.pdf"
-                        build_pdf(pdf_file_name, st.session_state.cv_data)
+                        build_pdf(pdf_file_name, st.session_state.cv_data, selected_template)
                         with open(pdf_file_name, "rb") as pdf_file:
                             st.download_button(label="Download PDF", data=pdf_file, file_name=pdf_file_name, mime="application/octet-stream", use_container_width=True)
 
