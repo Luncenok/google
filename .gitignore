@@ -13,3 +13,6 @@ wheels/
 .streamlit/secrets.toml
 
 .env
+
+*.json
+*.pdf

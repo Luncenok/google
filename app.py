@@ -165,7 +165,7 @@ with st.sidebar:
 
     st.header("User Profiles")
     profiles = load_profiles()
-    profile_names = ["Create New Profile"] + list(profiles.keys())
+    profile_names = list(profiles.keys()) + ["Create New Profile"] 
     
     selected_profile_name = st.selectbox("Select a Profile", profile_names)
 
@@ -233,12 +233,12 @@ with col2: # AI Analysis Column
                 if st.button("Rate CV", use_container_width=True):
                     with st.spinner("Rating your CV..."):
                         st.session_state.rating = rate_cv(model, st.session_state.job_description, st.session_state.cv_data)
-            with b2:
-                if 'rating' in st.session_state:
-                    if st.button("Apply Suggestions", use_container_width=True):
-                        with st.spinner("Applying suggestions..."):
-                            st.session_state.cv_data = apply_suggestions(model, st.session_state.cv_data, st.session_state.rating)
-                            st.rerun()
+            # with b2:
+            #     if 'rating' in st.session_state:
+            #         if st.button("Apply Suggestions", use_container_width=True):
+            #             with st.spinner("Applying suggestions..."):
+            #                 st.session_state.cv_data = apply_suggestions(model, st.session_state.cv_data, st.session_state.rating)
+            #                 st.rerun()
             with b3:
                 if st.button("Generate PDF", use_container_width=True):
                     with st.spinner("Generating PDF..."):
