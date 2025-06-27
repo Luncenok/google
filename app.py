@@ -239,27 +239,40 @@ with col1: # Workspace Column
                 if 'rating' in st.session_state:
                     del st.session_state['rating']
 
-    # Show persistent download buttons for generated PDFs
+with col2: # AI Analysis & CV Editing Column
     if st.session_state.get('generated_cvs'):
         for idx, item in enumerate(st.session_state.generated_cvs):
-            with open(item['pdf_name'], 'rb') as pdf_file:
-                st.download_button(label=f"Download PDF for Job {idx+1}", data=pdf_file, file_name=item['pdf_name'], mime="application/octet-stream", use_container_width=True)
-
-with col2: # AI Analysis Column
-    # Allow rating for each generated CV
-    if st.session_state.get('generated_cvs'):
-        with st.container(border=True):
-            st.subheader("Step 3: Review and Refine")
-            for idx, item in enumerate(st.session_state.generated_cvs):
-                if st.button(f"Rate Job {idx+1}", key=f"rate_{idx}", use_container_width=True):
+            cv_data = item['cv_data']
+            st.subheader(f"Resume for Job {idx+1}")
+            # Step 2: Edit CV
+            if st.session_state.get('edit_for') == idx:
+                cv_data = display_editable_cv(cv_data)
+                # Update the edited CV data
+                st.session_state.generated_cvs[idx]['cv_data'] = cv_data
+                if st.button("Done Editing", key=f"done_edit_{idx}"):
+                    st.session_state.pop('edit_for', None)
+                    st.rerun()
+            else:
+                if st.button("Edit CV", key=f"edit_{idx}", use_container_width=True):
+                    st.session_state['edit_for'] = idx
+                    st.rerun()
+            # Step 3: Rate & Generate PDF
+            cols = st.columns(2)
+            with cols[0]:
+                if st.button(f"Rate CV", key=f"rate_{idx}", use_container_width=True):
                     with st.spinner(f"Rating CV for Job {idx+1}..."):
-                        desc = st.session_state.job_descriptions[idx]
-                        rating = rate_cv(model, desc, item['cv_data'])
+                        rating = rate_cv(model, st.session_state.job_descriptions[idx], cv_data)
                         ratings = st.session_state.get('ratings', {})
                         ratings[idx] = rating
                         st.session_state['ratings'] = ratings
-            # Display ratings for each job
-            if st.session_state.get('ratings'):
-                st.subheader("AI Feedback")
-                for idx, rating in st.session_state['ratings'].items():
-                    st.markdown(f"**Job {idx+1}:**\n{rating}")
+            with cols[1]:
+                if st.button(f"Generate PDF", key=f"gen_{idx}", use_container_width=True):
+                    pdf_name = item['pdf_name']
+                    build_pdf(pdf_name, cv_data, selected_template)
+            # Download button appears after generation
+            if os.path.exists(item['pdf_name']):
+                with open(item['pdf_name'], 'rb') as pdf_file:
+                    st.download_button(label=f"Download PDF for Job {idx+1}", data=pdf_file, file_name=item['pdf_name'], mime="application/pdf", use_container_width=True)
+            # Display rating feedback
+            if st.session_state.get('ratings', {}).get(idx):
+                st.markdown(f"**AI Feedback for Job {idx+1}:**\n{st.session_state['ratings'][idx]}")
