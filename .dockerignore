@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+__pycache__
+.mypy_cache
+.venv
+.DS_Store
+*.pdf
+profiles/
+*.lock
