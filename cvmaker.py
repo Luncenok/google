@@ -49,93 +49,92 @@ FONT_NAME_ITALIC = 'Helvetica-Oblique'
         # // REASON: Grouped skills into categories. This helps recruiters quickly scan for relevant expertise.
         # // Added new keywords relevant to AI/ML Engineer roles.
 CV_DATA = {
-    "name": "Mateusz Idziejczak",
-    "title": "AI & Machine Learning Engineer",
+    "name": "",
+    "title": "",
     "contact": {
-        "Email": "mateusz.idziejczak@gmail.com",
-        "LinkedIn": "linkedin.com/in/mateusz-idziejczak-a2aa65248",
-        "Location": "Poznan, Poland",
+        "Email": "",
+        "LinkedIn": "",
+        "Location": "",
     },
-    "summary": """
-    AI & Machine Learning Engineer specializing in the research and application of Large Language Models, with a proven track record in AI safety analysis and full-stack development. Author of 'Among Them,' a novel framework for assessing LLM persuasion, accepted for publication at the PAKDD 2025 conference. Seeking to leverage expertise in LLM fine-tuning, Reinforcement Learning, RAG, and MLOps to build robust and ethical AI solutions.
-    """,
+    "summary": "",
     "publications": [
         {
-            "title": "Among Them: A Game-Based Framework for Assessing Persuasion Capabilities of LLMs",
-            "journal": "Advances in Knowledge Discovery and Data Mining. PAKDD 2025. Lecture Notes in Computer Science(), vol 15874. Springer, Singapore",
-            "date": "17 June 2025",
-            "doi": "https://doi.org/10.1007/978-981-96-8186-0_15"
+            "title": "",
+            "journal": "",
+            "date": "",
+            "doi": ""
         }
     ],
     "experience": [
         {
-            "title": "Software Engineer",
-            "company": "Malopolskie Towarzystwo Ornitologiczne",
-            "date": "06/2023 – Present",
-            "location": "Remote",
+            "title": "",
+            "company": "",
+            "date": "",
+            "location": "",
             "description": [
-                "Engineered and deployed a full-stack web application for the VIII International White Stork Census, enabling over 2500 volunteers to submit critical ornithological data across Poland.",
-                "Administered a Linux server with Nginx and Docker, containerizing application services to ensure seamless data collection during the peak census period.",
-                "Designed and self-hosted a Supabase backend and nominatim API for geocoding.",
-                "Developed a cross-platform mobile client using Kotlin Multiplatform (KMP) with Jetpack Compose, allowing for both online and offline data submission from the field."
+                "",
+                "",
+                "",
+                ""
             ]
         },
         {
-            "title": "Junior Android Developer",
-            "company": "goodylabs",
-            "date": "02/2023 – 06/2023",
-            "location": "Poland",
+            "title": "",
+            "company": "",
+            "date": "",
+            "location": "",
             "description": [
-                "Translated complex Figma prototypes into pixel-perfect, responsive UIs using Jetpack Compose and Kotlin, contributing to the successful launch of the e-commerce application.",
-                "Collaborated within an Agile framework using Jira, Git, and CI/CD pipelines to deliver features and bug fixes.",
+                "",
+                "",
+                ""
             ]
         }
     ],
      "projects": [
         {
-            "name": "Among Them Framework",
-            "date": "10/2024 – 03/2025",
+            "name": "",
+            "date": "",
             "description": [
-                "Contributed significantly to the research and development that led to the peer-reviewed publication 'Among Them: A Game-Based Framework...' at the PAKDD 2025 conference.",
-                "Developed a unique game-based platform to systematically assess the persuasive and deceptive capabilities of various LLMs through simulated social deduction gameplay.",
-                "Applied advanced prompt engineering to and run experiments to analyze persuasion capabilities of models like GPT-4o and Llama 3."
+                "",
+                "",
+                ""
             ]
         },
         {
-            "name": "TaxGPT - AI Tax Assistant",
-            "date": "HackYeah Hackathon 2024",
+            "name": "",
+            "date": "",
             "description": [
-                "Engineered a multi-agent AI assistant using LangGraph and Azure OpenAI (GPT-4o) that automates the completion of Polish PCC-3 tax forms.",
-                "Designed to reduce form completion time and complexity of tax forms and ensure valid data submission."
+                "",
+                ""
             ]
         },
         {
-            "name": "Quantum AI for Oncology",
-            "date": "QLFuture Hackathon 2024",
+            "name": "",
+            "date": "",
             "description": [
-                "Developed a hybrid classical-quantum neural network to improve the detection of cancerous cells in medical imaging.",
-                "Leveraged the ORCA quantum computer via the Poznan Supercomputing and Networking Center to design and implement quantum layers, demonstrating a potential in quantum computing."
+                "",
+                ""
             ]
         },
     ],
     "education": [
-        {"degree": "B.Sc.in Artificial Intelligence", "institution": "Poznan University of Technology", "date": "2023 – 2026 (Expected)"},
-        {"degree": "B.Sc.in in Computer Science", "institution": "Poznan University of Technology", "date": "2022 – 2023 (moved to AI)"},
-        {"degree": "IT Technician Diploma", "institution": "Technikum Komunikacji w Poznaniu", "date": "2018 – 2022"}
+        {"degree": "", "institution": "", "date": ""},
+        {"degree": "", "institution": "", "date": ""},
+        {"degree": "", "institution": "", "date": ""}
     ],
     "languages": [
-        {"name": "Polish", "label": "Native"},
-        {"name": "English", "label": "Advanced (B2, ACERT Certified)"},
-        {"name": "German", "label": "Intermediate (B1, DSD I PRO Certified)"},
+        {"name": "", "label": ""},
+        {"name": "", "label": ""},
+        {"name": "", "label": ""},
     ],
     "skills": {
-        "AI & Machine Learning": ["LLM Research & AI Safety", "Natural Language Processing (NLP)", "Computer Vision", "Deep Learning", "Reinforcement Learning", "PyTorch", "Scikit-learn"],
-        "LLM & MLOps": ["Prompt Engineering", "Fine-Tuning", "Hugging Face"],
-        "Software & DevOps": ["Python", "Kotlin", "Java", "React", "TypeScript", "Jetpack Compose", "Docker", "Nginx", "Git", "REST APIs"],
-        "Databases & Platforms": ["SQL (PostgreSQL)", "Supabase", "Linux"],
+        "": ["", "", "", "", "", "", ""],
+        "": ["", "", ""],
+        "": ["", "", "", "", "", "", "", ""],
+        "": ["", "", ""],
     },
     "awards": [
-        "Second Prize, Huawei ICT Global Competition 2024-25 (Network Track)"
+        ""
     ]
 }
 

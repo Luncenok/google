@@ -17,7 +17,7 @@ def initialize_gemini():
 
     if api_key:
         genai.configure(api_key=api_key)
-        return genai.GenerativeModel('gemini-1.5-flash')
+        return genai.GenerativeModel('gemini-2.5-flash')
     else:
         st.error("GEMINI_API_KEY not found. Please add it to your .env file or Streamlit secrets.", icon="🚨")
         st.stop()
@@ -26,7 +26,7 @@ def generate_cv_data(model, job_description, user_details):
     """Generates CV data using Gemini AI in JSON mode."""
     prompt = f"""
     Based on the following job description and user details, generate a CV in JSON format.
-    
+    The JSON should follow this structure: {json.dumps(CV_DATA, indent=2)} 
 
     Job Description:
     {job_description}
