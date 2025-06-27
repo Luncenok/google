@@ -4,6 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from gemini_utils import initialize_gemini, generate_cv_data, rate_cv, apply_suggestions
+import os
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,6 +13,33 @@ load_dotenv()
 st.set_page_config(layout="wide")
 
 st.title("✨ AI-Powered CV Generator")
+
+# --- Constants ---
+PROFILES_DIR = "profiles"
+
+# --- Profile Functions ---
+def load_profiles():
+    """Loads all profiles from the profiles directory."""
+    if not os.path.exists(PROFILES_DIR):
+        os.makedirs(PROFILES_DIR)
+    profiles = {}
+    for filename in os.listdir(PROFILES_DIR):
+        if filename.endswith(".json"):
+            profile_name = os.path.splitext(filename)[0]
+            with open(os.path.join(PROFILES_DIR, filename), 'r') as f:
+                profiles[profile_name] = json.load(f)
+    return profiles
+
+def save_profile(profile_name, data):
+    """Saves a profile to a JSON file."""
+    if not profile_name:
+        st.error("Profile name cannot be empty.")
+        return
+    file_path = os.path.join(PROFILES_DIR, f"{profile_name}.json")
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=4)
+    st.success(f"Profile '{profile_name}' saved!")
+
 
 # --- Initialize Model ---
 model = initialize_gemini()
@@ -129,13 +158,37 @@ def display_editable_cv(cv_data):
 
 # --- Sidebar ---
 with st.sidebar:
+    st.header("User Profiles")
+    profiles = load_profiles()
+    profile_names = ["Create New Profile"] + list(profiles.keys())
+    
+    selected_profile_name = st.selectbox("Select a Profile", profile_names)
+
+    if selected_profile_name == "Create New Profile":
+        current_profile = {}
+    else:
+        current_profile = profiles[selected_profile_name]
+
     st.header("Your Details")
-    user_name = st.text_input("Full Name", "Mateusz Idziejczak")
-    user_email = st.text_input("Email", "mateusz.idziejczak@gmail.com")
-    user_linkedin = st.text_input("LinkedIn", "linkedin.com/in/mateusz-idziejczak-a2aa65248")
-    user_location = st.text_input("Location", "Poznan, Poland")
-    user_title = st.text_input("Target Role", "AI & Machine Learning Engineer")
-    user_details_text = st.text_area("Paste your raw CV details here", height=300, help="Paste your full, unedited CV here. The AI will use this as source material.")
+    user_name = st.text_input("Full Name", current_profile.get("user_name", "Mateusz Idziejczak"))
+    user_email = st.text_input("Email", current_profile.get("user_email", "mateusz.idziejczak@gmail.com"))
+    user_linkedin = st.text_input("LinkedIn", current_profile.get("user_linkedin", "linkedin.com/in/mateusz-idziejczak-a2aa65248"))
+    user_location = st.text_input("Location", current_profile.get("user_location", "Poznan, Poland"))
+    user_title = st.text_input("Target Role", current_profile.get("user_title", "AI & Machine Learning Engineer"))
+    user_details_text = st.text_area("Paste your raw CV details here", current_profile.get("user_details_text", ""), height=300, help="Paste your full, unedited CV here. The AI will use this as source material.")
+
+    new_profile_name = st.text_input("Enter new profile name to save")
+    if st.button("Save Profile"):
+        profile_data = {
+            "user_name": user_name,
+            "user_email": user_email,
+            "user_linkedin": user_linkedin,
+            "user_location": user_location,
+            "user_title": user_title,
+            "user_details_text": user_details_text
+        }
+        save_profile(new_profile_name, profile_data)
+
 
 # --- Main App Layout ---
 col1, col2 = st.columns(2)
