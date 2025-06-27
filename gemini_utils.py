@@ -25,16 +25,28 @@ def initialize_gemini():
 def generate_cv_data(model, job_description, user_details):
     """Generates CV data using Gemini AI in JSON mode."""
     prompt = f"""
-    Based on the following job description and user details, generate a CV in JSON format.
-    The JSON should follow this structure: {json.dumps(CV_DATA, indent=2)} 
+    You are an expert Technical Recruiter and professional CV writer. Your task is to create a new, tailored CV in JSON format based on the provided raw CV details and a specific job description.
 
-    Job Description:
+    **Your Goal:** Rewrite and enhance the user's raw details to be a perfect match for the target job. Use the **STAR method (Situation, Task, Action, Result)** to rephrase experience and project descriptions, focusing on quantifiable achievements and impact.
+
+    **Instructions:**
+    1.  **Analyze the Job Description:** Identify the key skills, technologies, and responsibilities required.
+    2.  **Analyze the Raw CV:** Understand the user's background and experience.
+    3.  **Rewrite and Tailor:**
+        *   Create a powerful **summary** that directly addresses the job description and highlights the user's most relevant qualifications.
+        *   Rephrase the **experience** and **projects** bullet points to be action-oriented and results-driven. Use the STAR method. Quantify results wherever possible (e.g., "Increased performance by 30%" or "Reduced processing time from 10 minutes to 2 minutes").
+        *   Select and prioritize **skills** that are most relevant to the job description.
+    4.  **Format as JSON:** The final output must be a valid JSON object following the provided structure. Do not include any text or markdown outside of the JSON object.
+
+    **JSON Structure to Follow:**
+    {json.dumps(CV_DATA, indent=2)}
+
+    ---
+    **Job Description:**
     {job_description}
 
-    User Details:
+    **User's Raw CV Details:**
     {user_details}
-
-    Generate a CV that is tailored to the job description.
     """
     try:
         generation_config = GenerationConfig(response_mime_type="application/json")
