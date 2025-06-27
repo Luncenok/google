@@ -200,54 +200,66 @@ col1, col2 = st.columns(2)
 
 with col1: # Workspace Column
     with st.container(border=True):
-        st.subheader("Step 1: Provide Job Description")
-        job_url = st.text_input("Paste the Job Posting URL Here", key="job_url_input")
-
-        if st.button("Scrape Job Description"):
-            with st.spinner("Fetching job description..."):
-                st.session_state.job_description = get_job_description(job_url)
-                # Clear old CV data when new job is scraped
+        st.subheader("Step 1: Provide Job Descriptions")
+        job_urls_text = st.text_area("Paste the Job Posting URLs (one per line)", height=100)
+        if st.button("Scrape Job Descriptions"):
+            with st.spinner("Fetching job descriptions..."):
+                urls = [line.strip() for line in job_urls_text.splitlines() if line.strip()]
+                st.session_state.job_urls = urls
+                descriptions = [get_job_description(url) or "" for url in urls]
+                st.session_state.job_descriptions = descriptions
+                # Clear old CV data and ratings
                 if 'cv_data' in st.session_state: del st.session_state['cv_data']
                 if 'rating' in st.session_state: del st.session_state['rating']
-        
-        st.session_state.job_description = st.text_area("Scraped Job Description (Editable)", st.session_state.get("job_description", ""), height=200)
+        # Display each fetched job description for editing without directly modifying session_state
+        for i, desc in enumerate(st.session_state.get('job_descriptions', [])):
+            key = f"job_desc_{i}"
+            # Use existing session_state value if present, else default to desc
+            current = st.session_state.get(key, desc)
+            st.text_area(f"Job Description {i+1}", value=current, key=key, height=150)
 
-    if st.button("Generate Tailored CV", use_container_width=True):
-        if not st.session_state.get("job_description"):
-            st.warning("Please provide a job description first.")
+    if st.button("Generate Tailored CVs & PDFs", use_container_width=True):
+        descriptions = [st.session_state.get(f"job_desc_{i}") for i in range(len(st.session_state.get('job_descriptions', [])))]
+        if not descriptions:
+            st.warning("Please provide at least one job description first.")
         else:
-            with st.spinner("Generating your tailored CV..."):
+            with st.spinner("Generating your tailored CVs and PDFs..."):
                 user_details = {"name": user_name, "email": user_email, "linkedin": user_linkedin, "location": user_location, "title": user_title, "raw_cv": user_details_text}
-                st.session_state.cv_data = generate_cv_data(model, st.session_state.job_description, user_details)
-                if 'rating' in st.session_state: del st.session_state['rating']
+                generated = []
+                for i, desc_text in enumerate(descriptions):
+                    cv = generate_cv_data(model, desc_text, user_details)
+                    pdf_name = f"{user_name.replace(' ', '_')}_CV_{i+1}.pdf"
+                    build_pdf(pdf_name, cv, selected_template)
+                    generated.append({"cv_data": cv, "pdf_name": pdf_name})
+                # Store generated CVs for persistent download buttons and analysis
+                st.session_state.generated_cvs = generated
+                # For analysis, use the first CV
+                if generated:
+                    st.session_state.cv_data = generated[0]["cv_data"]
+                if 'rating' in st.session_state:
+                    del st.session_state['rating']
 
-    if 'cv_data' in st.session_state:
-        st.session_state.cv_data = display_editable_cv(st.session_state.cv_data)
+    # Show persistent download buttons for generated PDFs
+    if st.session_state.get('generated_cvs'):
+        for idx, item in enumerate(st.session_state.generated_cvs):
+            with open(item['pdf_name'], 'rb') as pdf_file:
+                st.download_button(label=f"Download PDF for Job {idx+1}", data=pdf_file, file_name=item['pdf_name'], mime="application/octet-stream", use_container_width=True)
 
 with col2: # AI Analysis Column
-    if 'cv_data' in st.session_state:
+    # Allow rating for each generated CV
+    if st.session_state.get('generated_cvs'):
         with st.container(border=True):
             st.subheader("Step 3: Review and Refine")
-            b1, b2, b3 = st.columns(3)
-            with b1:
-                if st.button("Rate CV", use_container_width=True):
-                    with st.spinner("Rating your CV..."):
-                        st.session_state.rating = rate_cv(model, st.session_state.job_description, st.session_state.cv_data)
-            # with b2:
-            #     if 'rating' in st.session_state:
-            #         if st.button("Apply Suggestions", use_container_width=True):
-            #             with st.spinner("Applying suggestions..."):
-            #                 st.session_state.cv_data = apply_suggestions(model, st.session_state.cv_data, st.session_state.rating)
-            #                 st.rerun()
-            with b3:
-                if st.button("Generate PDF", use_container_width=True):
-                    with st.spinner("Generating PDF..."):
-                        pdf_file_name = f"{st.session_state.cv_data['name'].replace(' ', '_')}_CV.pdf"
-                        build_pdf(pdf_file_name, st.session_state.cv_data, selected_template)
-                        with open(pdf_file_name, "rb") as pdf_file:
-                            st.download_button(label="Download PDF", data=pdf_file, file_name=pdf_file_name, mime="application/octet-stream", use_container_width=True)
-
-        if 'rating' in st.session_state:
-            with st.container(border=True):
+            for idx, item in enumerate(st.session_state.generated_cvs):
+                if st.button(f"Rate Job {idx+1}", key=f"rate_{idx}", use_container_width=True):
+                    with st.spinner(f"Rating CV for Job {idx+1}..."):
+                        desc = st.session_state.job_descriptions[idx]
+                        rating = rate_cv(model, desc, item['cv_data'])
+                        ratings = st.session_state.get('ratings', {})
+                        ratings[idx] = rating
+                        st.session_state['ratings'] = ratings
+            # Display ratings for each job
+            if st.session_state.get('ratings'):
                 st.subheader("AI Feedback")
-                st.markdown(st.session_state.rating)
+                for idx, rating in st.session_state['ratings'].items():
+                    st.markdown(f"**Job {idx+1}:**\n{rating}")
