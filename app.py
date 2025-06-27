@@ -35,15 +35,53 @@ def get_job_description(url):
         return None
 
 def display_editable_cv(cv_data):
-    """Displays the CV data in an editable form."""
+    """Displays the CV data in a fully editable form with add/remove buttons."""
     with st.container(border=True):
         st.subheader("Step 2: Edit Your CV")
-        
-        # Basic Info
+
+        # --- Helper function for dynamic list editing ---
+        def manage_list_items(section_title, section_data, template_item):
+            st.markdown(f"##### {section_title}")
+            
+            items_to_remove = []
+            for i, item in enumerate(section_data):
+                # Use a more robust key for the expander title
+                expander_title = item.get("title", item.get("name", item.get("degree", f"Item {i+1}")))
+                with st.expander(f"{section_title} {i+1}: {expander_title}", expanded=True):
+                    c1, c2 = st.columns([4, 1])
+                    with c1:
+                        for key, value in template_item.items():
+                            # Special handling for description field
+                            if key == "description":
+                                # Check if description is a list or a single string
+                                current_desc = item.get(key, [])
+                                if isinstance(current_desc, list):
+                                    # Join list into a single string for the text_area
+                                    display_text = "\\n".join(current_desc)
+                                else:
+                                    # If it's already a string, use it directly
+                                    display_text = current_desc
+                                
+                                # The output of text_area is always a string. We split it back into a list.
+                                item[key] = st.text_area(f"{key.capitalize()} {i}", display_text, key=f"{section_title}_{i}_{key}", height=150).split('\\n')
+                            else:
+                                item[key] = st.text_input(f"{key.capitalize()} {i}", item.get(key, ""), key=f"{section_title}_{i}_{key}")
+                    with c2:
+                        if st.button(f"Remove", key=f"remove_{section_title}_{i}", use_container_width=True):
+                            items_to_remove.append(i)
+            
+            for i in sorted(items_to_remove, reverse=True):
+                section_data.pop(i)
+                st.rerun()
+
+            if st.button(f"Add {section_title}", key=f"add_{section_title}", use_container_width=True):
+                section_data.append(template_item.copy())
+                st.rerun()
+
+        # --- Form Fields ---
         cv_data["name"] = st.text_input("Name", cv_data.get("name", ""))
         cv_data["title"] = st.text_input("Title", cv_data.get("title", ""))
         
-        # Contact
         contact = cv_data.get("contact", {})
         c1, c2, c3 = st.columns(3)
         with c1: contact["Email"] = st.text_input("Email", contact.get("Email", ""))
@@ -51,29 +89,41 @@ def display_editable_cv(cv_data):
         with c3: contact["Location"] = st.text_input("Location", contact.get("Location", ""))
         cv_data["contact"] = contact
 
-        # Summary
         cv_data["summary"] = st.text_area("Summary", cv_data.get("summary", ""), height=150)
 
-        # Experience
-        st.markdown("##### Experience")
-        for i, job in enumerate(cv_data.get("experience", [])):
-            with st.expander(f"Job {i+1}: {job.get('title', '')}", expanded=True):
-                job["title"] = st.text_input(f"Title {i}", job.get("title", ""))
-                job["company"] = st.text_input(f"Company {i}", job.get("company", ""))
-                job["date"] = st.text_input(f"Date {i}", job.get("date", ""))
-                description = job.get("description", [])
-                description_text = "\n".join(description) if isinstance(description, list) else description
-                job["description"] = st.text_area(f"Description {i}", description_text, height=150).split("\n")
+        # --- Dynamic Sections ---
+        manage_list_items("Experience", cv_data.get("experience", []), {"title": "", "company": "", "date": "", "location": "", "description": ""})
+        manage_list_items("Project", cv_data.get("projects", []), {"name": "", "date": "", "description": ""})
+        manage_list_items("Publication", cv_data.get("publications", []), {"title": "", "journal": "", "date": "", "doi": ""})
+        manage_list_items("Education", cv_data.get("education", []), {"degree": "", "institution": "", "date": ""})
+        manage_list_items("Language", cv_data.get("languages", []), {"name": "", "label": ""})
         
-        # Projects
-        st.markdown("##### Projects")
-        for i, project in enumerate(cv_data.get("projects", [])):
-            with st.expander(f"Project {i+1}: {project.get('name', '')}", expanded=True):
-                project["name"] = st.text_input(f"Project Name {i}", project.get("name", ""))
-                project["date"] = st.text_input(f"Project Date {i}", project.get("date", ""))
-                description = project.get("description", [])
-                description_text = "\n".join(description) if isinstance(description, list) else description
-                project["description"] = st.text_area(f"Project Description {i}", description_text, height=150).split("\n")
+        # Awards are simple strings, not objects, so handle them differently.
+        st.markdown("##### Awards")
+        awards = cv_data.get("awards", [])
+        for i in range(len(awards)):
+            awards[i] = st.text_input(f"Award {i+1}", awards[i], key=f"award_{i}")
+        if st.button("Add Award", use_container_width=True):
+            awards.append("")
+            st.rerun()
+        cv_data["awards"] = awards
+
+        # Skills
+        st.markdown("##### Skills")
+        skills = cv_data.get("skills", {})
+        if isinstance(skills, dict):
+            skills_text = "\n".join([f"{category}: {', '.join(skill_list)}" for category, skill_list in skills.items()])
+            edited_skills_text = st.text_area("Skills (Category: Skill1, Skill2...)", skills_text, height=150)
+            new_skills = {}
+            for line in edited_skills_text.split("\n"):
+                if ":" in line:
+                    category, skill_part = line.split(":", 1)
+                    new_skills[category.strip()] = [s.strip() for s in skill_part.split(",")]
+            cv_data["skills"] = new_skills
+        elif isinstance(skills, list):
+            skills_text = ", ".join(skills)
+            edited_skills_text = st.text_area("Skills", skills_text, height=100)
+            cv_data["skills"] = [s.strip() for s in edited_skills_text.split(",")]
 
     return cv_data
 
