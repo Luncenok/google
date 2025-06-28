@@ -2,6 +2,11 @@
 
 This Streamlit application leverages the power of Google's Gemini AI to help users create professional, tailored CVs that are optimized for specific job descriptions. It provides a complete workflow from scraping a job posting to generating a polished PDF, with AI-driven feedback and editing at every step.
 
+## Presentation
+
+See: [Team5.pdf](https://github.com/user-attachments/files/20961651/Team5.pdf)
+
+
 ## Features
 
 *   **Intelligent Job Scraping**: Paste a URL to a job posting, and the application will automatically extract the relevant job description text.
